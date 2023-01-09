@@ -26,12 +26,24 @@ void add_history(char* unused) {}
 #include <editline/history.h>
 #endif
 
+
+long expo(long x, long y) {
+    if (y == 0) {
+        return 1;
+    } else if (y == 1) {
+        return x;
+    } else {
+        return x * expo(x , (y - 1));
+    }
+}
+
 long eval_op(long x, char* op, long y) {
     if (strcmp(op, "+") == 0) {return x + y;}
     if (strcmp(op, "-") == 0) {return x - y;}
     if (strcmp(op, "*") == 0) {return x * y;}
     if (strcmp(op, "/") == 0) {return x / y;}
     if (strcmp(op, "%") == 0) {return x % y;}
+    if (strcmp(op, "^") == 0) {return expo(x, y);}
     return 0;
 }
 
@@ -70,7 +82,7 @@ int main(int argc, char** argv) {
     mpca_lang(MPCA_LANG_DEFAULT,
             "                                                      \
                 number    : /-?[0-9]+/;                            \
-                operator  : '+' | '-' | '*' | '/' | '%';           \
+                operator  : '+' | '-' | '*' | '/' | '%' | '^';           \
                 expr      : <number> | '(' <operator> <expr>+ ')'; \
                 lispy     : /^/ <operator> <expr>+ /$/;            \
             ",
