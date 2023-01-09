@@ -31,6 +31,7 @@ long eval_op(long x, char* op, long y) {
     if (strcmp(op, "-") == 0) {return x - y;}
     if (strcmp(op, "*") == 0) {return x * y;}
     if (strcmp(op, "/") == 0) {return x / y;}
+    if (strcmp(op, "%") == 0) {return x % y;}
     return 0;
 }
 
