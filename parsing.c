@@ -27,9 +27,21 @@ void add_history(char* unused) {}
 #include <editline/history.h>
 #endif
 
+long eval_op_1(char* op, long x) {
+    if (strcmp(op, "+") == 0) {return x;}
+    if (strcmp(op, "-") == 0) {return -x;}
+    if (strcmp(op, "*") == 0) {return x;}
+    if (strcmp(op, "/") == 0) {return 1/x;}
+    if (strcmp(op, "%") == 0) {return x;}
+    if (strcmp(op, "^") == 0) {return expo(x, x);}
+    if (strcmp(op, "min") == 0) {return x;}
+    if (strcmp(op, "max") == 0) {return x;}
+    return 0;
+}
 
-
-long eval_op(long x, char* op, long y) {
+long eval_op_n(long x, char* op, long y) {
+    printf("X from eval_op: %ld\n", x);
+    printf("Y from eval_op: %ld\n", y);
     if (strcmp(op, "+") == 0) {return x + y;}
     if (strcmp(op, "-") == 0) {return x - y;}
     if (strcmp(op, "*") == 0) {return x * y;}
@@ -41,6 +53,7 @@ long eval_op(long x, char* op, long y) {
     return 0;
 }
 
+
 long eval(mpc_ast_t* t) {
 
     /* If tagged as number return it directly */
@@ -50,14 +63,22 @@ long eval(mpc_ast_t* t) {
 
     /* The operator is always the second child. */
     char* op = t->children[1]->contents;
+    printf("OP: %s\n", op);
 
     /* We store the third child in x. */
     long x = eval(t->children[2]);
+    printf("X: %ld\n", x);
+    
+    printf("TAG: %s\n", t->children[3]->tag);
+    if ((strstr (t->children[3]->tag, "regex")) && !(strstr(t->children[3]->tag, "number"))) {
+        return eval_op_1(op, x);
+    }
 
     /* iterate over and combine the remaining childnre */
     int i = 3;
+    printf("5th item in ast: %s\n", t->children[i]->tag);
     while (strstr(t->children[i]->tag, "expr")) {
-        x = eval_op(x, op, eval(t->children[i]));
+        x = eval_op_n(x, op, eval(t->children[i]));
         i++;
     }
 
@@ -78,7 +99,7 @@ int main(int argc, char** argv) {
                 number    : /-?[0-9]+/;                            \
                 operator  : '+' | '-' | '*' | '/' | '%' | '^' | /min/ | /max/;           \
                 expr      : <number> | '(' <operator> <expr>+ ')'; \
-                lispy     : /^/ <operator> <expr>+ /$/;            \
+                lispy     : /^/  <operator> <expr>+  /$/;            \
             ",
             Number, Operator, Expr, Lispy);
 
@@ -98,6 +119,7 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* On success print the AST */
+            mpc_ast_print(r.output);
             long result = eval(r.output);
             printf("%li\n", result);
             mpc_ast_delete(r.output);
