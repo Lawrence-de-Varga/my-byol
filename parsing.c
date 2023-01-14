@@ -28,31 +28,48 @@ void add_history(char* unused) {}
 #endif
 
 
-long eval_op_1(char* op, long x) {
-    if (strcmp(op, "+") == 0) {return x;}
-    if (strcmp(op, "-") == 0) {return -x;}
-    if (strcmp(op, "*") == 0) {return x;}
-    if (strcmp(op, "/") == 0) {return 1/5;}
-    if (strcmp(op, "%") == 0) {return x;}
-    if (strcmp(op, "^") == 0) {return expo(x, x);}
-    if (strcmp(op, "min") == 0) {return x;}
-    if (strcmp(op, "max") == 0) {return x;}
-    return 0;
+// 
+typedef struct {
+    int type;
+    long num;
+    int err;
+} lval;
+
+enum { LVAL_NUM, LVAL_ERR };
+enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
+
+lval lval_num(long x) {
+    lval v;
+    v.type = LVAL_NUM;
+    v.num = x;
+    return v;
+} 
+
+lval lval_err(int x) {
+    lval v;
+    v.type = LVAL_ERR;
+    v.err = x;
+    return v;
 }
 
-long eval_op_n(long x, char* op, long y) {
-    printf("X from eval_op: %ld\n", x);
-    printf("Y from eval_op: %ld\n", y);
-    if (strcmp(op, "+") == 0) {return x + y;}
-    if (strcmp(op, "-") == 0) {return x - y;}
-    if (strcmp(op, "*") == 0) {return x * y;}
-    if (strcmp(op, "/") == 0) {return x / y;}
-    if (strcmp(op, "%") == 0) {return x % y;}
-    if (strcmp(op, "^") == 0) {return expo(x, y);}
-    if (strcmp(op, "min") == 0) {return min(x, y);}
-    if (strcmp(op, "max") == 0) {return max(x, y);}
-    return 0;
+void lval_print(lval v) {
+
+    puts("Entering lval_print");
+
+    switch(v.type) {
+        case LVAL_NUM: printf("%li", v.num); break;
+        case LVAL_ERR:
+            switch(v.err) {
+                case LERR_DIV_ZERO: printf("Error: Diveision By Zero."); break;
+                case LERR_BAD_OP: printf("Error: Invalid Operator."); break;
+                case LERR_BAD_NUM: printf("Error: Invalid Number."); break;
+                break; }
+        break; }
 }
+
+void lval_println(lval v) { lval_print(v); putchar('\n'); }
+
+
 
 void printast(mpc_ast_t* ast) {
 
@@ -60,25 +77,69 @@ void printast(mpc_ast_t* ast) {
     printf("CONTENTS t: %s\n", ast->contents);
     printf("CHILDREN_NUM t: %i\n\n", ast->children_num);
 }
+
+
+lval eval_op_1(char* op, lval x) {
+
+    puts("Entering eval_op_1");
+
+    if (x.type == LVAL_ERR) { return x;}
+
+    if (strcmp(op, "+") == 0) {return lval_num(x.num);}
+    if (strcmp(op, "-") == 0) {return lval_num(-x.num);}
+    if (strcmp(op, "*") == 0) {return lval_num(x.num);}
+    if (strcmp(op, "/") == 0) {return lval_num(1/x.num);}
+    if (strcmp(op, "%") == 0) {return lval_num(x.num);}
+    if (strcmp(op, "^") == 0) {return lval_num(expo(x.num, x.num));}
+    if (strcmp(op, "min") == 0) {return lval_num(x.num);}
+    if (strcmp(op, "max") == 0) {return lval_num(x.num);}
+    return lval_err(LERR_BAD_OP);
+}
+
+lval eval_op_n(lval x, char* op, lval y) {
+
+    puts("Entering eval_op_n");
+
+    if (x.type == LVAL_ERR) { return x;}
+    if (y.type == LVAL_ERR) { return y;}
+
+    if (strcmp(op, "+") == 0) {return lval_num(x.num + y.num);}
+    if (strcmp(op, "-") == 0) {return lval_num(x.num - y.num);}
+    if (strcmp(op, "*") == 0) {return lval_num(x.num * y.num);}
+    if (strcmp(op, "/") == 0) 
+        {return y.num == 0 ? lval_err(LERR_DIV_ZERO) : lval_num(x.num / y.num);}
+    if (strcmp(op, "%") == 0) {return lval_num(x.num % y.num);}
+    if (strcmp(op, "^") == 0) {return lval_num(expo(x.num, y.num));}
+    if (strcmp(op, "min") == 0) {return lval_num(min(x.num, y.num));}
+    if (strcmp(op, "max") == 0) {return lval_num(max(x.num, y.num));}
+
+    return lval_err(LERR_BAD_OP);
+}
+
 // eval_h simply allows us to get straight at the expression
 // in the ast that we want ignoring the '>' and 'regex' tags
 mpc_ast_t* eval_h(mpc_ast_t* t) {
     return t->children[1];
 }
 
-long eval(mpc_ast_t* t) {
+lval eval(mpc_ast_t* t) {
+
+    puts("Entering eval");
 
     /* If tagged as number return it directly */
     if (strstr(t->tag, "number")) {
-        return atoi(t->contents);
+        errno = 0;
+        long x = strtol(t->contents, NULL, 10);
+        return errno != ERANGE ? lval_num(x) : lval_err(LERR_BAD_NUM);
     }
 
     /* The operator is always the second child. */
     char* op = t->children[1]->contents;
 
     /* We store the third child in x. */
-    long x = eval(t->children[2]);
+    lval x = eval(t->children[2]);
 
+    // if the user gives (- 5) or (+ 5) a result will be returned by eval_op_1
     if ((strstr (t->children[3]->tag, "char")) && !(strstr(t->children[3]->tag, "operator"))) {
         return eval_op_1(op, x);
     }
@@ -86,6 +147,7 @@ long eval(mpc_ast_t* t) {
     int i = 3;
     while (strstr(t->children[i]->tag, "expr")) {
         x = eval_op_n(x, op, eval(t->children[i]));
+        i++;
     }
 
     return x;
@@ -126,8 +188,8 @@ int main(int argc, char** argv) {
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* On success print the AST */
             mpc_ast_print(r.output);
-            long result = eval(eval_h(r.output));
-            printf("%li\n", result);
+            lval result = eval(eval_h(r.output));
+            lval_println(result);
             mpc_ast_delete(r.output);
         } else {
             /* Otherwise print the error */
