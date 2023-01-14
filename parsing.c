@@ -28,16 +28,20 @@ void add_history(char* unused) {}
 #endif
 
 
-// 
+// Defines the lisp value type which will be extended as types other than 
+// numbers and erros are added
 typedef struct {
     int type;
     long num;
     int err;
 } lval;
 
+// defines two enums, one a list of currently available types and the other
+// a list of current erros
 enum { LVAL_NUM, LVAL_ERR };
 enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
 
+// Returns a lisp value obkject of type LVAL_NUM
 lval lval_num(long x) {
     lval v;
     v.type = LVAL_NUM;
@@ -45,12 +49,14 @@ lval lval_num(long x) {
     return v;
 } 
 
+// Returns a lisp value obkject of type LVAL_ERR
 lval lval_err(int x) {
     lval v;
     v.type = LVAL_ERR;
     v.err = x;
     return v;
 }
+
 
 void lval_print(lval v) {
 
@@ -70,7 +76,7 @@ void lval_print(lval v) {
 void lval_println(lval v) { lval_print(v); putchar('\n'); }
 
 
-
+// Used for basic debuging
 void printast(mpc_ast_t* ast) {
 
     printf("TAG t: %s\n", ast->tag);
@@ -79,6 +85,8 @@ void printast(mpc_ast_t* ast) {
 }
 
 
+// Used to evaluate expressions of one operator and one arguments
+// such as (- 5) or (/ 5)
 lval eval_op_1(char* op, lval x) {
 
     puts("Entering eval_op_1");
@@ -96,6 +104,7 @@ lval eval_op_1(char* op, lval x) {
     return lval_err(LERR_BAD_OP);
 }
 
+// Main operator evaluation rule
 lval eval_op_n(lval x, char* op, lval y) {
 
     puts("Entering eval_op_n");
@@ -122,6 +131,8 @@ mpc_ast_t* eval_h(mpc_ast_t* t) {
     return t->children[1];
 }
 
+// Evaluates any valid expression and returns an lval (currently only a number or 
+// an error)
 lval eval(mpc_ast_t* t) {
 
     puts("Entering eval");
