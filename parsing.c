@@ -38,8 +38,8 @@ typedef struct {
 
 // defines two enums, one a list of currently available types and the other
 // a list of current erros
-enum { LVAL_NUM, LVAL_ERR };
-enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
+enum lvals { LVAL_NUM, LVAL_ERR };
+enum errors { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
 
 // Returns a lisp value obkject of type LVAL_NUM
 lval lval_num(long x) {
@@ -138,7 +138,7 @@ lval eval(mpc_ast_t* t) {
     puts("Entering eval");
 
     /* If tagged as number return it directly */
-    if (strstr(t->tag, "number")) {
+    if (strstr(t->tag, "integer")) {
         errno = 0;
         long x = strtol(t->contents, NULL, 10);
         return errno != ERANGE ? lval_num(x) : lval_err(LERR_BAD_NUM);
@@ -167,7 +167,8 @@ lval eval(mpc_ast_t* t) {
 
 int main(int argc, char** argv) {
     /* Create some parsers */
-    mpc_parser_t* Number    = mpc_new("number");
+    mpc_parser_t* Integer   = mpc_new("integer");
+    mpc_parser_t* Double   = mpc_new("double");
     mpc_parser_t* Operator  = mpc_new("operator");
     mpc_parser_t* Expr      = mpc_new("expr");
     mpc_parser_t* Lispy     = mpc_new("lispy");
@@ -175,12 +176,13 @@ int main(int argc, char** argv) {
     /* Define them with the following langauge */
     mpca_lang(MPCA_LANG_DEFAULT,
             "                                                      \
-                number    : /-?[0-9]+/;                            \
+                integer    : /-?[0-9]+/;                            \
+                double     : /-?[0-9]+\\.[0-9]+/;                            \
                 operator  : '+' | '-' | '*' | '/' | '%' | '^' | /min/ | /max/;           \
-                expr      : <number> | '(' <operator> <expr>+ ')'; \
+                expr      : <double> | <integer> | '(' <operator> <expr>+ ')'; \
                 lispy     : /^/ <expr> /$/;            \
             ",
-            Number, Operator, Expr, Lispy);
+            Integer, Double, Operator, Expr, Lispy);
 
     /* Print version and exit information */
     puts("Lispy Version 0.0.0.3");
@@ -213,7 +215,7 @@ int main(int argc, char** argv) {
 
     }
     /* Undefine and Delete our Parses */
-    mpc_cleanup(4, Number, Operator, Expr, Lispy);
+    mpc_cleanup(4, Integer, Double, Operator, Expr, Lispy);
     return 0;
     }
 
