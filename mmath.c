@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 long expo(long x, long y) {
     if (y == 0) {
         return 1;
