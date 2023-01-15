@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mpc.h"
+#include "read.c"
 
 // Used for basic debuging
 void printast(mpc_ast_t* ast) {

@@ -3,8 +3,7 @@
 #include <string.h>
 #include "mpc.h"
 #include "mmath.c"
-#include "lval.c"
-#include "eval.c"
+#include "print.c"
 
 /* Code for when running on windows */
 #ifdef _WIN32
@@ -29,10 +28,6 @@ void add_history(char* unused) {}
 #include <editline/readline.h>
 #include <editline/history.h>
 #endif
-
-
-
-
 
 int main(int argc, char** argv) {
     /* Create some parsers */
