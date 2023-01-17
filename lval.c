@@ -15,8 +15,7 @@ typedef struct lval {
     struct lval** cell;
 } lval;
 
-// defines two enums, one a list of currently available types and the other
-// a list of current erros
+// List of all LVAL types
 enum lvals { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
 
 // Returns a lisp value obkject of type LVAL_NUM
@@ -37,20 +36,14 @@ lval* lval_err(char* m) {
 }
 
 lval* lval_sym(char* s) {
-//    puts("Constructing a lval_sym.");
     lval* v = malloc(sizeof(lval));
-//    puts("After malloc for sym.");
     v->type = LVAL_SYM;
-//    puts("After setting type for sym.");
     v->sym = malloc(strlen(s) + 1);
-//    puts("After malloc for v->sym.");
     strcpy(v->sym, s);
-//    puts("After strcpy.");
     return v;
 }
 
 lval* lval_sexpr(void) {
-//    puts("In lval_sexpr.");
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_SEXPR;
     v->lval_p_count = 0;
@@ -58,21 +51,24 @@ lval* lval_sexpr(void) {
     return v;
 }
 
-// Used to free memory allocated to any lvals
+// Used to free memory allocated to any lval fields.
 void lval_del(lval* v) {
     
 //    puts("In lval_Del");
         
     switch (v->type) {
-        // LVAL_NUM does not allocate memory so no need to free
+        // LVAL_NUM does not allocate memory aside from the memory for the lval
+        // so no need to free extra
         case LVAL_NUM: break;
+        // LVAL_ERR allocates space for a string which we must free when we have finished with it
         case LVAL_ERR: free(v->err); break;
+        // LVAL_SYM allocates space for a string which we must free when we have finished with it
         case LVAL_SYM: free(v->sym); break;
         // LVAL_SEXPR allocates memeory to cell which is a lval**
         // so we need to go through them all and free the memory allocated
         // to each of them.
         case LVAL_SEXPR:
-            for (int i = 1; i <= v->lval_p_count; i++) {
+            for (int i = 0; i < v->lval_p_count; i++) {
                 lval_del(v->cell[i]);
             }
         free(v->cell);

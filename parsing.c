@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* On success print the AST */
-//            mpc_ast_print(eval_h(r.output));
+            mpc_ast_print(eval_h(r.output));
             lval* x = lval_read(eval_h(r.output));
 //            puts("After setting x to lval_read(r.output).");
             lval_println(x);
