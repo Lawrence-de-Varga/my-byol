@@ -32,27 +32,27 @@ void add_history(char* unused) {}
 int main(int argc, char** argv) {
     /* Create some parsers */
     mpc_parser_t* Integer   = mpc_new("integer");
-    mpc_parser_t* Double   = mpc_new("double");
-    mpc_parser_t* Symbol  = mpc_new("symbol");
-    mpc_parser_t* Sexpr  = mpc_new("sexpr");
+    mpc_parser_t* Double    = mpc_new("double");
+    mpc_parser_t* Symbol    = mpc_new("symbol");
+    mpc_parser_t* Sexpr     = mpc_new("sexpr");
+    mpc_parser_t* Qexpr     = mpc_new("qexpr");
     mpc_parser_t* Expr      = mpc_new("expr");
     mpc_parser_t* Lispy     = mpc_new("lispy");
 
-    puts("In main before grammar");
 
     /* Define them with the following langauge */
     mpca_lang(MPCA_LANG_DEFAULT,
-            "                                                      \
-                integer : /-?[0-9]+/;                            \
-                double  : /-?[0-9]+\\.[0-9]+/;                            \
-                symbol  : '+' | '-' | '*' | '/' | '%' | '^' | /min/ | /max/;           \
-                sexpr   : '(' <expr>* ')'; \
-                expr    : <double> | <integer> | <symbol> | <sexpr> ; \
-                lispy   : /^/ <expr>* /$/;            \
+            "                                                                   \
+                integer : /-?[0-9]+/;                                           \
+                double  : /-?[0-9]+\\.[0-9]+/;                                  \
+                symbol  : '+' | '-' | '*' | '/' | '%' | '^' | /min/ | /max/;    \
+                sexpr   : '(' <expr>* ')';                                      \
+                qexpr   : '{' <expr>* '}' ;                                     \
+                expr    : <double> | <integer> | <symbol> | <sexpr> | <qexpr> ; \
+                lispy   : /^/ <expr>* /$/;                                      \
             ",
-            Integer, Double, Symbol, Expr, Sexpr, Lispy);
+            Integer, Double, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
-    puts("In main after grammar");
 
     /* Print version and exit information */
     puts("Lispy Version 0.0.0.3");
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         /* Attempt to parse the user input */
         mpc_result_t r;
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
-            /* On success print the AST */
+
             mpc_ast_print(eval_h(r.output));
 //            lval* x = lval_read(eval_h(r.output));
             lval* x = lval_eval(lval_read(eval_h(r.output)));
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 
     }
     /* Undefine and Delete our Parses */
-    mpc_cleanup(4, Integer, Double, Symbol, Sexpr, Expr, Lispy);
+    mpc_cleanup(7, Integer, Double, Symbol, Sexpr, Qexpr, Expr, Lispy);
     return 0;
     }
 

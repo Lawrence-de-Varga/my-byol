@@ -17,7 +17,7 @@ typedef struct lval {
 } lval;
 
 // List of all LVAL types
-enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
+enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR};
 
 // Returns a lisp value obkject of type LVAL_NUM
 lval* lval_num(long x) {
@@ -60,6 +60,14 @@ lval* lval_sexpr(void) {
     return v;
 }
 
+lval* lval_qexpr(void) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_QEXPR;
+    v->lval_p_count = 0;
+    v->cell = NULL;
+    return v;
+}
+
 // Used to free memory allocated to any lval fields.
 void lval_del(lval* v) {
     
@@ -77,6 +85,7 @@ void lval_del(lval* v) {
         // LVAL_SEXPR allocates memeory to cell which is a lval**
         // so we need to go through them all and free the memory allocated
         // to each of them.
+        case LVAL_QEXPR:
         case LVAL_SEXPR:
             for (int i = 0; i < v->lval_p_count; i++) {
                 lval_del(v->cell[i]);

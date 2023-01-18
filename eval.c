@@ -5,12 +5,6 @@
 #include "read.c"
 
 // Used for basic debuging
-void printast(mpc_ast_t* ast) {
-
-    printf("TAG t: %s\n", ast->tag);
-    printf("CONTENTS t: %s\n", ast->contents);
-    printf("CHILDREN_NUM t: %i\n\n", ast->children_num);
-}
 
 // eval_h simply allows us to get straight at the expression
 // in the ast that we want ignoring the '>' and 'regex' tags
@@ -118,6 +112,8 @@ lval* builtin_op(lval* a, char* op) {
         // Pop the next argument
         lval* y = lval_pop(a, 0);
         
+        // c is statically typed whilst the lisp is currently dynamically typed
+        // thus I need to fiddle around with types as below.
         switch (x->type) {
             case LVAL_NUM: 
                 if (y->type == LVAL_NUM) {
@@ -133,6 +129,8 @@ lval* builtin_op(lval* a, char* op) {
                     }
                 } else { 
 
+                    // here we set the currently unset value of x->doub
+                    // as if y is a double we want the conversion to be automatic
                     if (strcmp(op, "+") == 0) { x->doub = (x->num + y->doub); }
                     if (strcmp(op, "-") == 0) { x->doub = (x->num - y->doub); }
                     if (strcmp(op, "*") == 0) { x->doub = (x->num * y->doub); }
@@ -143,6 +141,9 @@ lval* builtin_op(lval* a, char* op) {
                         }
                         x->doub = (x->num / y->doub);
                     }
+//                    x->type is set to a double here because as soon as one
+//                    double is incl;uded in the calculation the result must
+//                    necessarily be a double.
                     x->type = LVAL_DOUBLE;
                 } break;
             case LVAL_DOUBLE:
