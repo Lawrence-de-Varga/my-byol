@@ -133,17 +133,18 @@ lval* builtin_op(lval* a, char* op) {
                     }
                 } else { 
 
-                    if (strcmp(op, "+") == 0) { x->num += y->doub; }
-                    if (strcmp(op, "-") == 0) { x->num -= y->doub; }
-                    if (strcmp(op, "*") == 0) { x->num *= y->doub; }
+                    if (strcmp(op, "+") == 0) { x->doub = (x->num + y->doub); }
+                    if (strcmp(op, "-") == 0) { x->doub = (x->num - y->doub); }
+                    if (strcmp(op, "*") == 0) { x->doub = (x->num * y->doub); }
                     if (strcmp(op, "/") == 0) {
                         if (y->doub == 0) {
                         lval_del(x); lval_del(y);
                         x = lval_err("Division by zero."); break;
                         }
-                        x->num /= y->doub;
+                        x->doub = (x->num / y->doub);
                     }
-                }
+                    x->type = LVAL_DOUBLE;
+                } break;
             case LVAL_DOUBLE:
                 if (y->type == LVAL_NUM) {
                     if (strcmp(op, "+") == 0) { x->doub += y->num; }
@@ -167,7 +168,7 @@ lval* builtin_op(lval* a, char* op) {
                         }
                         x->doub /= y->doub;
                     }
-                }
+                } break;
        }
         
     lval_del(y);
