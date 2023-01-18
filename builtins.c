@@ -7,15 +7,19 @@
 #define LASSERT(args, cond, err) \
     if (!(cond)) { lval_del(args); return lval_err(err); }
 
-#define INC_ARG_NO(args, arg_no, err) \
-    if (!(args->lval_p_count == arg_no) { lval_del(args); return lval_err(err); }
+
+#define INC_ARG_NO(lvalue, expected_arg_no,  error) \
+    if (!(lvalue->lval_p_count == expected_arg_no)) {  \
+            lval_del(lvalue); \
+            return lval_err(error); \
+            }
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lval* a) {
-    LASSERT(a, a->lval_p_count == 1, "Function 'car' passed too many arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'car' pass inncorrecf type.");
-    LASSERT(a, a->cell[0]->lval_p_count != 0, "Function 'car' pass {}");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'car' passed incorrect type.");
+    LASSERT(a, a->cell[0]->lval_p_count != 0, "Function 'car' passed {}");
 
+    INC_ARG_NO(a, 1, "Function 'car' passed too many arguments.");
 
     // create a new lval frm the first element of a
     lval* v = lval_take(a, 0);
