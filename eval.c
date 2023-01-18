@@ -41,6 +41,8 @@ lval* lval_take(lval* v, int i) {
 
 
 
+lval* builtin(lval* a, char* func);
+
 lval* lval_eval_sexpr(lval* v) {
 
     /* Evaluate children */
@@ -67,7 +69,7 @@ lval* lval_eval_sexpr(lval* v) {
     }
 
     // call builtin_op with operator
-    lval* result = builtin_op(v, f->sym);
+    lval* result = builtin(v, f->sym);
     lval_del(f);
     return result;
 }

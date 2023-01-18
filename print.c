@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mpc.h"
-#include "eval.c"
+#include "builtins.c"
 
 void lval_print(lval* v);
 
@@ -25,6 +25,7 @@ void lval_print(lval* v) {
 
 //    puts("Entering lval_print");
 
+    // chose print representation based of LVAL type
     switch(v->type) {
         case LVAL_NUM:       printf("%li", v->num); break;
         case LVAL_DOUBLE:    printf("%Lf", v->doub); break;
