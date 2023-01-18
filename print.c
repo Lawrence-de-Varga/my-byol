@@ -8,9 +8,8 @@ void lval_print(lval* v);
 
 void lval_expr_print(lval* v, char open, char close) {
     putchar(open);
+
     for (int i = 0; i < v->lval_p_count; i++) {
-//        puts("In lvla_expr_print loop");
-//        printf("v->type: %s\n", v->sym);
         lval_print(v->cell[i]);
 
 

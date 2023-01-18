@@ -71,12 +71,9 @@ int main(int argc, char** argv) {
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
             /* On success print the AST */
             mpc_ast_print(eval_h(r.output));
-            lval* x = lval_read(eval_h(r.output));
-//            puts("After setting x to lval_read(r.output).");
+            lval* x = lval_eval(lval_read(eval_h(r.output)));
             lval_println(x);
             lval_del(x);
-//            lval result = eval(eval_h(r.output));
-//            lval_println(result);
             mpc_ast_delete(r.output);
         } else {
             /* Otherwise print the error */

@@ -12,8 +12,7 @@ lval* lval_read_int(mpc_ast_t* t) {
 
 lval* lval_add(lval* v, lval* x) {
     v->lval_p_count++;
-    // Im not 100% clear about why I needed to add 1 to the lval_p_count as opposed to the book
-    v->cell = realloc(v->cell, sizeof(lval*) * v->lval_p_count+1);
+    v->cell = realloc(v->cell, sizeof(lval*) * v->lval_p_count);
     v->cell[v->lval_p_count-1] = x;
     return v;
 }
@@ -23,12 +22,14 @@ lval* lval_read(mpc_ast_t* t) {
     if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
 
 
-    // Declare an empty list which will be filled with valied sexprs
+    // create a base SEXPR to be built upon
     lval* x = lval_sexpr();
     
+    /*
     if (strstr(t->tag, ">") == 0) { x = lval_sexpr(); }
     if (strstr(t->tag, "sexpr") == 0) { puts("Setting x to non-null."); x = lval_sexpr(); }
     if (strstr(t->tag, "expr") == 0) { puts("Setting x to non-null."); x = lval_sexpr(); }
+    */
         
     for (int i = 0; i < t->children_num; i++) {
         if (strcmp(t->children[i]->contents, "(" ) == 0) {continue; }
