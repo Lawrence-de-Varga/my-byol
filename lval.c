@@ -7,6 +7,7 @@
 typedef struct lval {
     int type;
     long num;
+    long double doub;
 
     char* err;
     char* sym;
@@ -16,7 +17,7 @@ typedef struct lval {
 } lval;
 
 // List of all LVAL types
-enum lvals { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
+enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
 
 // Returns a lisp value obkject of type LVAL_NUM
 lval* lval_num(long x) {
@@ -25,6 +26,14 @@ lval* lval_num(long x) {
     v->num = x;
     return v;
 } 
+
+lval* lval_double(long double x) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_DOUBLE;
+    v->doub = x;
+    return v;
+}
+
 
 // Returns a lisp value obkject of type LVAL_ERR
 lval* lval_err(char* m) {
@@ -60,6 +69,7 @@ void lval_del(lval* v) {
         // LVAL_NUM does not allocate memory aside from the memory for the lval
         // so no need to free extra
         case LVAL_NUM: break;
+        case LVAL_DOUBLE: break;
         // LVAL_ERR allocates space for a string which we must free when we have finished with it
         case LVAL_ERR: free(v->err); break;
         // LVAL_SYM allocates space for a string which we must free when we have finished with it

@@ -91,7 +91,7 @@ lval* builtin_op(lval* a, char* op) {
 
     // Ensure that al arguments are numbers
     for (int i = 0; i < a->lval_p_count; i++) {
-        if (a->cell[i]->type != LVAL_NUM) {
+        if ((a->cell[i]->type != LVAL_NUM) && (a->cell[i]->type != LVAL_DOUBLE)) {
             lval_del(a);
             return lval_err("Cannot operate on non-numbers.");
         }
@@ -100,26 +100,76 @@ lval* builtin_op(lval* a, char* op) {
     // grab the first argument
     lval* x = lval_pop(a, 0);
 
+//    if (x->num_type == 0) {
+
+
     // If only one argument and op is subtraction than negate arguments
     if ((strcmp(op, "-") == 0) && a->lval_p_count == 0) {
-        x->num = -x->num;
+        switch(x->type) {
+            case LVAL_NUM:
+                x->num = -x->num;
+            case LVAL_DOUBLE:
+                x->num = -x->num;
+        }
     }
 
     while (a->lval_p_count > 0) {
 
         // Pop the next argument
         lval* y = lval_pop(a, 0);
+        
+        switch (x->type) {
+            case LVAL_NUM: 
+                if (y->type == LVAL_NUM) {
+                    if (strcmp(op, "+") == 0) { x->num += y->num; }
+                    if (strcmp(op, "-") == 0) { x->num -= y->num; }
+                    if (strcmp(op, "*") == 0) { x->num *= y->num; }
+                    if (strcmp(op, "/") == 0) {
+                        if (y->num == 0) {
+                        lval_del(x); lval_del(y);
+                        x = lval_err("Division by zero."); break;
+                        }
+                        x->num /= y->num;
+                    }
+                } else { 
 
-        if (strcmp(op, "+") == 0) { x->num += y->num; }
-        if (strcmp(op, "-") == 0) { x->num -= y->num; }
-        if (strcmp(op, "*") == 0) { x->num *= y->num; }
-        if (strcmp(op, "/") == 0) {
-            if (y->num == 0) {
-            lval_del(x); lval_del(y);
-            x = lval_err("Division by zero."); break;
-            }
-            x->num /= y->num;
-        }
+                    if (strcmp(op, "+") == 0) { x->num += y->doub; }
+                    if (strcmp(op, "-") == 0) { x->num -= y->doub; }
+                    if (strcmp(op, "*") == 0) { x->num *= y->doub; }
+                    if (strcmp(op, "/") == 0) {
+                        if (y->doub == 0) {
+                        lval_del(x); lval_del(y);
+                        x = lval_err("Division by zero."); break;
+                        }
+                        x->num /= y->doub;
+                    }
+                }
+            case LVAL_DOUBLE:
+                if (y->type == LVAL_NUM) {
+                    if (strcmp(op, "+") == 0) { x->doub += y->num; }
+                    if (strcmp(op, "-") == 0) { x->doub -= y->num; }
+                    if (strcmp(op, "*") == 0) { x->doub *= y->num; }
+                    if (strcmp(op, "/") == 0) {
+                        if (y->num == 0) {
+                        lval_del(x); lval_del(y);
+                        x = lval_err("Division by zero."); break;
+                        }
+                        x->doub /= y->num;
+                    }
+                } else { 
+                    if (strcmp(op, "+") == 0) { x->doub += y->doub; }
+                    if (strcmp(op, "-") == 0) { x->doub -= y->doub; }
+                    if (strcmp(op, "*") == 0) { x->doub *= y->doub; }
+                    if (strcmp(op, "/") == 0) {
+                        if (y->doub == 0) {
+                        lval_del(x); lval_del(y);
+                        x = lval_err("Division by zero."); break;
+                        }
+                        x->doub /= y->doub;
+                    }
+                }
+       }
+        
     lval_del(y);
     }
     lval_del(a); return x;

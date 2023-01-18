@@ -4,10 +4,17 @@
 #include "mpc.h"
 #include "lval.c"
 
+lval* lval_read_double(mpc_ast_t* t) {
+    errno = 0;
+    char *end;
+    long double x = strtold(t->contents, &end);
+    return errno != ERANGE ? lval_double(x) : lval_err("invalid double");
+}
+
 lval* lval_read_int(mpc_ast_t* t) {
     errno = 0;
     long x = strtol(t->contents, NULL, 10);
-    return errno != ERANGE ? lval_num(x) : lval_err("invalid_number");
+    return errno != ERANGE ? lval_num(x) : lval_err("invliad integer");
 }
 
 lval* lval_add(lval* v, lval* x) {
@@ -19,6 +26,7 @@ lval* lval_add(lval* v, lval* x) {
 
 lval* lval_read(mpc_ast_t* t) {
     if (strstr(t->tag, "integer")) { return lval_read_int(t); }
+    if (strstr(t->tag, "double")) { return lval_read_double(t); }
     if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
 
 
