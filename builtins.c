@@ -50,14 +50,19 @@ lval* builtin_cons(lval* a) {
     INC_ARG_NO(a, 2, "Function 'cons' passed incorrect number of arguments.");
     LASSERT(a, a->cell[1]->type == LVAL_QEXPR, "Function 'cons' needs a q-expr as its second argument.");
 
+    // increase count and increase allocated memory
     a->cell[1]->lval_p_count++;
     a->cell[1]->cell = realloc(a->cell[1]->cell, sizeof(lval*) * a->cell[1]->lval_p_count);
+
+    // move the current data up to  the new end of memory
     memmove(a->cell[1]->cell+1, a->cell[1]->cell,
             sizeof(lval*) * (a->cell[1]->lval_p_count));
+    // set the first place inmemory equal to the object to be consed on
     a->cell[1]->cell[0] = a->cell[0];
     
     return a->cell[1];
 }
+
 
 lval* builtin_list(lval* a) {
     a->type = LVAL_QEXPR;
@@ -101,8 +106,23 @@ lval* builtin_join(lval* a) {
     return x;
 }
 
+
+lval* builtin_len(lval* a) {
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'len' passed incorrect type.");
+
+    switch(a->type) {
+        case LVAL_QEXPR:
+        case LVAL_SEXPR:
+            return lval_num(a->cell[0]->lval_p_count);
+        default:
+            return lval_num(1);
+    }
+}
+
+
 lval* builtin(lval* a, char* func) {
     if (strcmp("list", func) == 0) { return builtin_list(a); }
+    if (strcmp("len", func) == 0) { return builtin_len(a); }
     if (strcmp("car", func) == 0) { return builtin_car(a); }
     if (strcmp("cons", func) == 0) { return builtin_cons(a); }
     if (strcmp("cdr", func) == 0) { return builtin_cdr(a); }
