@@ -9,16 +9,21 @@
 
 
 #define INC_ARG_NO(lvalue, expected_arg_no,  error) \
-    if (!(lvalue->lval_p_count == expected_arg_no)) {  \
+    if (lvalue->lval_p_count != expected_arg_no) {  \
             lval_del(lvalue); \
             return lval_err(error); \
             }
 
+#define CALLED_W_NIL(lvalue, error) \
+    if (lvalue->cell[0]->lval_p_count == 0) { \
+        lval_del(lvalue); \
+        return lval_err(error); \
+    }
+
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lval* a) {
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'car' passed incorrect type.");
-    LASSERT(a, a->cell[0]->lval_p_count != 0, "Function 'car' passed {}");
-
+    CALLED_W_NIL(a, "Function car passed NIL as argument");
     INC_ARG_NO(a, 1, "Function 'car' passed too many arguments.");
 
     // create a new lval frm the first element of a
@@ -30,9 +35,9 @@ lval* builtin_car(lval* a) {
 
 
 lval* builtin_cdr(lval* a) {
-    LASSERT(a, a->lval_p_count == 1, "Function 'cdr' passed too many arguments.");
+    INC_ARG_NO(a, 1, "Function 'cdr' passed too many arguments.");
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'cdr' passed incorrect type.");
-    LASSERT(a, a->cell[0]->lval_p_count != 0, "Function 'cdr' passed {}.");
+    CALLED_W_NIL(a, "Function 'cdr' passed {}.");
 
 
     lval* v = lval_take(a, 0);
@@ -47,7 +52,7 @@ lval* builtin_list(lval* a) {
 }
 
 lval* builtin_eval(lval* a) {
-    LASSERT(a, a->lval_p_count == 1, "Function 'eval' passed too many arguments.");
+    INC_ARG_NO(a, 1, "Function 'eval' passed too many arguments.");
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type.");
 
     lval* x = lval_take(a, 0);
