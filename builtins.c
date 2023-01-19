@@ -109,6 +109,7 @@ lval* builtin_join(lval* a) {
 
 lval* builtin_len(lval* a) {
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'len' passed incorrect type.");
+    INC_ARG_NO(a, 1, "Function 'len' passed too many arguments.");
 
     switch(a->type) {
         case LVAL_QEXPR:
