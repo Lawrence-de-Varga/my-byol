@@ -12,13 +12,14 @@
     if (lvalue->lval_p_count != expected_arg_no) {  \
             lval_del(lvalue); \
             return lval_err(error); \
-            }
+    }
 
 #define CALLED_W_NIL(lvalue, error) \
     if (lvalue->cell[0]->lval_p_count == 0) { \
         lval_del(lvalue); \
         return lval_err(error); \
     }
+
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lval* a) {
@@ -45,6 +46,18 @@ lval* builtin_cdr(lval* a) {
     return v;
 }
 
+lval* builtin_cons(lval* a) {
+    INC_ARG_NO(a, 2, "Function 'cons' passed incorrect number of arguments.");
+    LASSERT(a, a->cell[1]->type == LVAL_QEXPR, "Function 'cons' needs a q-expr as its second argument.");
+
+    a->cell[1]->lval_p_count++;
+    a->cell[1]->cell = realloc(a->cell[1]->cell, sizeof(lval*) * a->cell[1]->lval_p_count);
+    memmove(a->cell[1]->cell+1, a->cell[1]->cell,
+            sizeof(lval*) * (a->cell[1]->lval_p_count));
+    a->cell[1]->cell[0] = a->cell[0];
+    
+    return a->cell[1];
+}
 
 lval* builtin_list(lval* a) {
     a->type = LVAL_QEXPR;
@@ -91,6 +104,7 @@ lval* builtin_join(lval* a) {
 lval* builtin(lval* a, char* func) {
     if (strcmp("list", func) == 0) { return builtin_list(a); }
     if (strcmp("car", func) == 0) { return builtin_car(a); }
+    if (strcmp("cons", func) == 0) { return builtin_cons(a); }
     if (strcmp("cdr", func) == 0) { return builtin_cdr(a); }
     if (strcmp("join", func) == 0) { return builtin_join(a); }
     if (strcmp("eval", func) == 0) { return builtin_eval(a); }
