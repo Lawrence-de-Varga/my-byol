@@ -47,7 +47,8 @@ int main(int argc, char** argv) {
                 double  : /-?[0-9]+\\.[0-9]+/;                                  \
                 symbol  : '+' | '-' | '*' | '/' | '%' | '^' | /min/ | /max/     \
                           | \"list\" | \"car\" | \"cdr\" | \"cons\"             \
-                          | \"join\" | \"eval\" | \"len\" | \"reverse\";                                \
+                          | \"join\" | \"eval\" | \"len\" | \"reverse\"         \
+                          | \"init\";                                           \
                 sexpr   : '(' <expr>* ')';                                      \
                 qexpr   : '{' <expr>* '}' ;                                     \
                 expr    : <double> | <integer> | <symbol> | <sexpr> | <qexpr> ; \

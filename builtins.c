@@ -64,8 +64,8 @@ lval* builtin_cons(lval* a) {
 }
 
 lval* builtin_reverse(lval* a) {
-    INC_ARG_NO(a, 1, "Functionreverse called with incorrect number of arguments.");
-    LASSERT(a, a->cell[1]->type == LVAL_QEXPR, "Function 'reverse' needs a q-expr as its argument.");
+    INC_ARG_NO(a, 1, "Function 'reverse' called with incorrect number of arguments.");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'reverse' needs a q-expr as its argument.");
 
     lval* v = lval_qexpr();
     lval* to_rev = a->cell[0];
@@ -79,11 +79,25 @@ lval* builtin_reverse(lval* a) {
         v->cell[i] = to_rev->cell[a_length - (i + 1)];
     }
 
-
-
     return v;
 }
 
+lval* builtin_init(lval* a) {
+    INC_ARG_NO(a, 1, "Function 'init' called with incorrect number of arguments.");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'init' needs a q-expr as its argument.");
+
+    lval* v = lval_qexpr();
+    lval* to_map = a->cell[0];
+    int count = to_map->lval_p_count -1;
+
+    v->cell = realloc(v->cell, sizeof(lval*) * (count));
+
+    for (int i = 0; i < count; i++) {
+        v->cell[i] = to_map->cell[i];
+    }
+    v->lval_p_count = count;
+    return v;
+}
 
 
 
@@ -153,6 +167,7 @@ lval* builtin(lval* a, char* func) {
     if (strcmp("cdr", func) == 0) { return builtin_cdr(a); }
     if (strcmp("join", func) == 0) { return builtin_join(a); }
     if (strcmp("reverse", func) == 0) { return builtin_reverse(a); }
+    if (strcmp("init", func) == 0) { return builtin_init(a); }
     if (strcmp("eval", func) == 0) { return builtin_eval(a); }
     if (strstr("+-*/^", func)) { return builtin_op(a, func); }
     lval_del(a);

@@ -16,6 +16,20 @@ typedef struct lval {
     struct lval** cell;
 } lval;
 
+void print_lval(lval* v) {
+    printf("lval type: %d\n", v->type);
+    printf("lval num: %ld\n", v->num);
+//    printf("lval doub: %Lf\n", v->doub);
+//    printf("lval err: %s\n", v->err);
+//    printf("lval sym: %s\n", v->sym);
+    printf("lval count: %d\n", v->lval_p_count);
+    puts("\n");
+    for (int i = 0; i < v->lval_p_count; i++) {
+        printf("lvla child %d.\n", i);
+        print_lval(v->cell[i]);
+    }
+}
+
 // List of all LVAL types
 enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR};
 
