@@ -209,7 +209,7 @@ lval* lenv_get(lenv* e, lval* k) {
     }
 
 
-    return lval_err("symbol '%s' is not bound in this environment.", k->sym);
+    return lval_err("symbol is not bound in this environment.");
 }
 
 void lenv_put(lenv* e, lval* k, lval* v) {
@@ -226,6 +226,13 @@ void lenv_put(lenv* e, lval* k, lval* v) {
     e->count++;
     e->syms = realloc(e->syms, sizeof(char*) * e->count);
     e->vals = realloc(e->vals, sizeof(lval*) * e->count);
+
+    e->vals[e->count-1] = lval_copy(v);
+    e->syms[e->count-1] = malloc(strlen(k->sym) +1);
+    strcpy(e->syms[e->count-1], k->sym);
+}
+
+
                 
 
 
