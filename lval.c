@@ -2,6 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "mpc.h"
+
+
+struct lval;
+struct lenv;
+typedef struct lval lval;
+typedef struct lenv lenv;
+
+// List of all LVAL types
+enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR, LVAL_FUN};
+
+
+typedef lval*(*lbuiltin)(lenv*, lval*);
+
 // Defines the lisp value type which will be extended as types other than 
 // numbers and erros are added
 typedef struct lval {
@@ -11,27 +24,22 @@ typedef struct lval {
 
     char* err;
     char* sym;
+    lbuiltin fun;
 
     int lval_p_count;
     struct lval** cell;
 } lval;
 
-void print_lval(lval* v) {
-    printf("lval type: %d\n", v->type);
-    printf("lval num: %ld\n", v->num);
-//    printf("lval doub: %Lf\n", v->doub);
-//    printf("lval err: %s\n", v->err);
-//    printf("lval sym: %s\n", v->sym);
-    printf("lval count: %d\n", v->lval_p_count);
-    puts("\n");
-    for (int i = 0; i < v->lval_p_count; i++) {
-        printf("lvla child %d.\n", i);
-        print_lval(v->cell[i]);
-    }
+
+/************************* LVAL Constructors ***********************/ 
+
+lval* lval_fun(lbuiltin func) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_FUN;
+    v->fun = func;
+    return v;
 }
 
-// List of all LVAL types
-enum lvals { LVAL_DOUBLE, LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR};
 
 // Returns a lisp value obkject of type LVAL_NUM
 lval* lval_num(long x) {
@@ -82,6 +90,60 @@ lval* lval_qexpr(void) {
     return v;
 }
 
+
+/**************** LVAL Utility Functions ***************************/
+
+void print_lval(lval* v) {
+    printf("lval type: %d\n", v->type);
+    printf("lval num: %ld\n", v->num);
+//    printf("lval doub: %Lf\n", v->doub);
+//    printf("lval err: %s\n", v->err);
+//    printf("lval sym: %s\n", v->sym);
+    printf("lval fun: %p\n", v->fun);
+    printf("lval count: %d\n", v->lval_p_count);
+    puts("\n");
+    for (int i = 0; i < v->lval_p_count; i++) {
+        printf("lvla child %d.\n", i);
+        print_lval(v->cell[i]);
+    }
+}
+
+lval* lval_copy(lval* v) {
+
+    lval* x = malloc(sizeof(lval));
+    x->type = v->type;
+
+    switch (v->type) {
+
+        // Copy functions and numbers directly
+        case LVAL_FUN: x->fun = v->fun; break;
+        case LVAL_NUM: x->num = v->num; break;
+        case LVAL_DOUBLE: x->doub = v->doub; break;
+
+          /* Copy strings using malloc and strcpy */
+        case LVAL_ERR: 
+              x->err = malloc(strlen(v->err) +1);
+              strcpy(x->err, v->err); break;
+
+        case LVAL_SYM:
+              x->sym = malloc(strlen(v->sym) +1);
+              strcpy(x->sym, v->sym); break;
+
+        case LVAL_SEXPR:
+        case LVAL_QEXPR:
+              x->lval_p_count = v->lval_p_count;
+              x->cell = malloc(sizeof(lval*) * x->lval_p_count);
+              for (int i = 0; i < x->lval_p_count; i++) {
+                  x->cell[i] = lval_copy(v->cell[i]);
+              } break;
+    }
+
+    return x;
+}
+
+
+
+
 // Used to free memory allocated to any lval fields.
 void lval_del(lval* v) {
     
@@ -92,6 +154,7 @@ void lval_del(lval* v) {
         // so no need to free extra
         case LVAL_NUM: break;
         case LVAL_DOUBLE: break;
+        case LVAL_FUN: break;
         // LVAL_ERR allocates space for a string which we must free when we have finished with it
         case LVAL_ERR: free(v->err); break;
         // LVAL_SYM allocates space for a string which we must free when we have finished with it

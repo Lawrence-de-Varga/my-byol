@@ -27,6 +27,7 @@ void lval_print(lval* v) {
 
     // chose print representation based of LVAL type
     switch(v->type) {
+        case LVAL_FUN:       printf("<function>"); break;
         case LVAL_NUM:       printf("%li", v->num); break;
         case LVAL_DOUBLE:    printf("%Lf", v->doub); break;
         case LVAL_ERR:       printf("Error: %s", v->err); break;

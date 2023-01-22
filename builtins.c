@@ -87,15 +87,20 @@ lval* builtin_init(lval* a) {
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'init' needs a q-expr as its argument.");
 
     lval* v = lval_qexpr();
+    // set to_map for convenience
     lval* to_map = a->cell[0];
+
     int count = to_map->lval_p_count -1;
 
+    // allocate enough space for v->cell 
     v->cell = realloc(v->cell, sizeof(lval*) * (count));
+    // decrease the space in to_map->cell, as otherwise when we go to copy 
+    // it will try to copy too much data into v->cell
+    to_map->cell = realloc(to_map->cell, sizeof(lval*) * (count));
 
-    for (int i = 0; i < count; i++) {
-        v->cell[i] = to_map->cell[i];
-    }
+    memcpy(v->cell, to_map->cell, sizeof(lval*) * (count));
     v->lval_p_count = count;
+
     return v;
 }
 
