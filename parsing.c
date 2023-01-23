@@ -58,6 +58,10 @@ int main(int argc, char** argv) {
     puts("Lispy Version 0.0.0.3");
     puts("Press Ctrl+c to Exit\n");
 
+
+    lenv* e = lenv_new();
+    lenv_add_builtins(e);
+
     /* In a never eneding loop */
     while (1) {
         /* Output our prompt and get input*/
@@ -72,7 +76,7 @@ int main(int argc, char** argv) {
 
             mpc_ast_print(eval_h(r.output));
 //            lval* x = lval_read(eval_h(r.output));
-            lval* x = lval_eval(lval_read(eval_h(r.output)));
+            lval* x = lval_eval(e, lval_read(eval_h(r.output)));
             lval_println(x);
             lval_del(x);
             mpc_ast_delete(r.output);

@@ -12,7 +12,7 @@ mpc_ast_t* eval_h(mpc_ast_t* t) {
     return t->children[1];
 }
 
-lval* builtin_op(lval* a, char* op);
+lval* builtin_op(lenv* e, lval* a, char* op);
 lval* lval_eval(lenv* e, lval* v);
 
 lval* lval_pop(lval* v, int i) {
@@ -41,7 +41,7 @@ lval* lval_take(lval* v, int i) {
 
 
 
-lval* builtin(lval* a, char* func);
+lval* builtin(lenv* e, lval* a, char* func);
 
 lval* lval_eval_sexpr(lenv* e, lval* v) {
 
@@ -61,7 +61,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     // Evalute single atom sexpr's
     if (v->lval_p_count == 1) { return lval_take(v, 0); }
 
-    // Check that first element is a symbol
+    // Check that first element is a function
     lval* f = lval_pop(v, 0);
     if (f->type != LVAL_FUN) {
         lval_del(v); lval_del(f);
@@ -88,7 +88,7 @@ lval* lval_eval(lenv* e, lval* v) {
 }
 
 
-lval* builtin_op(lval* a, char* op) {
+lval* builtin_op(lenv* e, lval* a, char* op) {
 
     // Ensure that al arguments are numbers
     for (int i = 0; i < a->lval_p_count; i++) {
