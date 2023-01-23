@@ -108,16 +108,6 @@ lval* builtin_list(lenv* e, lval* a) {
     return a;
 }
 
-lval* builtin_eval(lenv* e, lval* a) {
-    INC_ARG_NO(a, 1, "Function 'eval' passed too many arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type.");
-
-    lval* x = lval_take(a, 0);
-    x->type = LVAL_SEXPR;
-    return lval_eval(e, x);
-}
-
-
 lval* lval_join(lenv* e, lval* x, lval* y) {
 
     while (y->lval_p_count) {
@@ -159,6 +149,38 @@ lval* builtin_len(lenv* e, lval* a) {
     }
 }
 
+/********************* SPECIAL FUNCTIONS ************************************/
+
+lval* builtin_eval(lenv* e, lval* a) {
+    INC_ARG_NO(a, 1, "Function 'eval' passed too many arguments.");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type.");
+
+    lval* x = lval_take(a, 0);
+    x->type = LVAL_SEXPR;
+    return lval_eval(e, x);
+}
+
+lval* builtin_def(lenv* e, lval* a) {
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Functiondef passed incorrect type.");
+
+    lval* syms = a->cell[0];
+
+    for (int i = 0; i < syms->lval_p_count; i++) {
+        LASSERT(a, syms->cell[i]->type == LVAL_SYM, "Fcuntion def coonot define non-symbols.");
+    }
+
+    LASSERT(a, syms->lval_p_count = a->lval_p_count-1, "Function 'def' cannot define innorect number of values to symbols.");
+    
+    for (int i = 0; i < syms->lval_p_count; i++) {
+        lenv_put(e, syms->cell[i], a->cell[i+1]);
+    }
+
+    lval_del(a);
+    return lval_sexpr();
+}
+
+/*********************** AMTH FUNCTIONS **************************************/
+
 lval* builtin_add(lenv* e, lval* a) {
     return builtin_op(e, a, "+");
 }
@@ -175,20 +197,20 @@ lval* builtin_div(lenv* e, lval* a) {
     return builtin_op(e, a, "/");
 }
 
-lval* builtin(lenv* e, lval* a, char* func) {
-    if (strcmp("list", func) == 0) { return builtin_list(e, a); }
-    if (strcmp("len", func) == 0) { return builtin_len(e, a); }
-    if (strcmp("car", func) == 0) { return builtin_car(e, a); }
-    if (strcmp("cons", func) == 0) { return builtin_cons(e, a); }
-    if (strcmp("cdr", func) == 0) { return builtin_cdr(e, a); }
-    if (strcmp("join", func) == 0) { return builtin_join(e, a); }
-    if (strcmp("reverse", func) == 0) { return builtin_reverse(e, a); }
-    if (strcmp("init", func) == 0) { return builtin_init(e, a); }
-    if (strcmp("eval", func) == 0) { return builtin_eval(e, a); }
-    if (strstr("+-*/^", func)) { return builtin_op(e, a, func); }
-    lval_del(a);
-    return lval_err("Unknown function.");
-}
+//lval* builtin(lenv* e, lval* a, char* func) {
+//    if (strcmp("list", func) == 0) { return builtin_list(e, a); }
+//    if (strcmp("len", func) == 0) { return builtin_len(e, a); }
+//    if (strcmp("car", func) == 0) { return builtin_car(e, a); }
+//    if (strcmp("cons", func) == 0) { return builtin_cons(e, a); }
+//    if (strcmp("cdr", func) == 0) { return builtin_cdr(e, a); }
+//    if (strcmp("join", func) == 0) { return builtin_join(e, a); }
+//    if (strcmp("reverse", func) == 0) { return builtin_reverse(e, a); }
+//    if (strcmp("init", func) == 0) { return builtin_init(e, a); }
+//    if (strcmp("eval", func) == 0) { return builtin_eval(e, a); }
+//    if (strstr("+-*/^", func)) { return builtin_op(e, a, func); }
+//    lval_del(a);
+//    return lval_err("Unknown function.");
+//}
 
 /************************ REGISTERING BUILTINS FOR ENVIRONMENT ***************/
 
@@ -208,6 +230,9 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "reverse", builtin_reverse);
     lenv_add_builtin(e, "init", builtin_init);
     lenv_add_builtin(e, "join", builtin_join);
+
+    // Variable Functions
+    lenv_add_builtin(e, "def", builtin_def);
 
     // Other
     lenv_add_builtin(e, "eval", builtin_eval);
