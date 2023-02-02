@@ -75,8 +75,19 @@ int main(int argc, char** argv) {
         if (mpc_parse("<stdin>", input, Lispy, &r)) {
 
             mpc_ast_print(eval_h(r.output));
-//            lval* x = lval_read(eval_h(r.output));
-            lval* x = lval_eval(e, lval_read(eval_h(r.output)));
+            lval* x = lval_eval(e, lval_read(e, eval_h(r.output)));
+
+//            lval* read = lval_read(e, eval_h(r.output));
+//            puts("after reading");
+
+//            char* mess = lval_present(read);
+//            printf("%s\n", mess);
+//            free(mess);
+//            puts("after presenting");
+
+//            lval* x = lval_eval(e, read);
+//            puts("After eval");
+
             lval_println(x);
             lval_del(x);
             mpc_ast_delete(r.output);
@@ -90,6 +101,7 @@ int main(int argc, char** argv) {
         free(input);
 
     }
+    lenv_del(e);
     /* Undefine and Delete our Parses */
     mpc_cleanup(7, Integer, Double, Symbol, Sexpr, Qexpr, Expr, Lispy);
     return 0;

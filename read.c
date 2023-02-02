@@ -24,8 +24,9 @@ lval* lval_read_double(mpc_ast_t* t) {
 lval* lval_read_int(mpc_ast_t* t) {
     errno = 0;
     long x = strtol(t->contents, NULL, 10);
-    return errno != ERANGE ? lval_num(x) : lval_err("invliad integer");
+    return errno != ERANGE ? lval_num(x) : lval_err("invalid integer");
 }
+
 
 // takes twoi Lval*'s and combines into one
 lval* lval_add(lval* v, lval* x) {
@@ -35,12 +36,15 @@ lval* lval_add(lval* v, lval* x) {
     return v;
 }
 
-lval* lval_read(mpc_ast_t* t) {
+lval* lval_read(lenv* e, mpc_ast_t* t) {
 
+//    puts("Printing current ast inside lval_read.");
+//    printast(t);
     if (strstr(t->tag, "integer")) { return lval_read_int(t); }
     if (strstr(t->tag, "double")) { return lval_read_double(t); }
+    if ((strstr(t->tag, "symbol")) && (str_in_env_p(e, t->contents))) { return lenv_get(e, lval_sym(t->contents)); }
     if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
-    
+
 //    puts("Printing current ast inside lval_read.");
 //    printast(t);
     
@@ -62,7 +66,7 @@ lval* lval_read(mpc_ast_t* t) {
         if (strcmp(t->children[i]->contents, "}" ) == 0) {continue; }
         // I don't think I need this line
 //        if (strcmp(t->children[i]->tag, "regex" ) == 0) {continue; }
-        x = lval_add(x, lval_read(t->children[i]));
+        x = lval_add(x, lval_read(e, t->children[i]));
     }
 
     return x;

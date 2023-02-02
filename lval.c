@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "mpc.h"
 
 
@@ -25,6 +26,7 @@ typedef struct lval {
     char* err;
     char* sym;
     lbuiltin fun;
+    char* fun_name;
 
     int lval_p_count;
     struct lval** cell;
@@ -33,10 +35,11 @@ typedef struct lval {
 
 /************************* LVAL Constructors ***********************/ 
 
-lval* lval_fun(lbuiltin func) {
+lval* lval_fun(lbuiltin func, char* fun_name) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
     v->fun = func;
+    v->fun_name = fun_name;
     return v;
 }
 
@@ -58,11 +61,21 @@ lval* lval_double(long double x) {
 
 
 // Returns a lisp value obkject of type LVAL_ERR
-lval* lval_err(char* m) {
+lval* lval_err(char* fmt, ...) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_ERR;
-    v->err = malloc(strlen(m) + 1);
-    strcpy(v->err, m);
+
+    va_list va;
+    va_start(va, fmt);
+
+    v->err = malloc(512);
+
+    vsnprintf(v->err, 511, fmt, va);
+
+    v->err = realloc(v->err, strlen(v->err)+1);
+
+    va_end(va);
+
     return v;
 }
 
@@ -116,7 +129,7 @@ lval* lval_copy(lval* v) {
     switch (v->type) {
 
         // Copy functions and numbers directly
-        case LVAL_FUN: x->fun = v->fun; break;
+        case LVAL_FUN: x->fun_name = v->fun_name; x->fun = v->fun; break;
         case LVAL_NUM: x->num = v->num; break;
         case LVAL_DOUBLE: x->doub = v->doub; break;
 
@@ -139,6 +152,69 @@ lval* lval_copy(lval* v) {
     }
 
     return x;
+}
+
+
+char* lval_present(lval* v);
+
+// Used to generate a string representation of a SEXPR or QEXPR
+char* lval_expr_present(lval* v, char open, char close) {
+//    puts("in lval_expr_present");
+    char* expr = calloc(1024, sizeof(char));
+//    int expr_size = 1;
+    strcat(expr, &open);
+
+    for (int i = 0; i < v->lval_p_count; i++) {
+//        expr_size++;
+//        expr = realloc(expr, expr_size);
+        strcat(expr, lval_present(v->cell[i]));
+//        printf("char: %s\n", lval_present(v->cell[i]));
+//        printf("expr %s\n", expr);
+
+
+
+        // Don't print trailing space if last element
+//        expr_size++;
+//        expr = realloc(expr, expr_size);
+        if (i < (v->lval_p_count-1)) {
+           strcat(expr, " "); 
+        }
+    }
+
+    strcat(expr, &close);
+//    char* string  = expr;
+//    printf("%s\n", expr);
+    return expr;
+}
+
+// used to return a string representation of any lval for erro messaging purposes.
+char* lval_present (lval* v) {
+//    puts("In lval_present");
+    char* string_presentation = calloc(1024, sizeof(char));
+//    puts ("after string_presentation assign");
+    char* expr;
+    switch (v->type) {
+        case LVAL_SEXPR:    
+            expr = lval_expr_present(v, '(', ')');
+            strcat(string_presentation, expr); 
+            free(expr);
+            break;
+
+        case LVAL_QEXPR:    
+            expr = lval_expr_present(v, '{', '}');
+            strcat(string_presentation, expr); 
+            free(expr);
+            break;
+        case LVAL_FUN:      sprintf(string_presentation, "%s", v->fun_name); break;
+        case LVAL_SYM:      sprintf(string_presentation, "%s", v->sym); break;
+        case LVAL_ERR:      sprintf(string_presentation, "%s", v->err); break;
+        case LVAL_NUM:      sprintf(string_presentation, "%ld", v->num); break;
+        case LVAL_DOUBLE:   sprintf(string_presentation, "%Lf", v->doub); break;
+        default:            sprintf(string_presentation, "Unknown value."); break;
+    }
+    
+//    char* string = realloc(string_presentation, strlen(string_presentation) +1);
+    return string_presentation;
 }
 
 
@@ -199,19 +275,33 @@ void lenv_del(lenv* e) {
    free(e);
 }
 
+// Finds a symbol in the env that matches the input or returns an erro
 lval* lenv_get(lenv* e, lval* k) {
-
+//    puts("in lval_get");
     for (int i = 0; i < e->count; i++) {
 
         if (strcmp(e->syms[i], k->sym) == 0) {
+//            puts("found matching sym in lval_get");
             return lval_copy(e->vals[i]);
         }
     }
 
 
-    return lval_err("symbol is not bound in this environment.");
+    return lval_err("symbol %s, is not bound in this environment.", k->sym);
 }
 
+bool str_in_env_p(lenv* e, char* str) {
+    for (int i = 0; i < e->count; i++) {
+        if (strcmp(str, e->syms[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+        
+
+
+// Adds a newly defined symbol to the env
 void lenv_put(lenv* e, lval* k, lval* v) {
 
     for (int i = 0; i < e->count; i++) {

@@ -30,7 +30,7 @@ void lval_print(lval* v) {
         case LVAL_FUN:       printf("<function>"); break;
         case LVAL_NUM:       printf("%li", v->num); break;
         case LVAL_DOUBLE:    printf("%Lf", v->doub); break;
-        case LVAL_ERR:       printf("Error: %s", v->err); break;
+        case LVAL_ERR:       puts("in case error"); printf("Error: %s", v->err); break;
         case LVAL_SYM:       printf("%s", v->sym); break;
         case LVAL_SEXPR:     lval_expr_print(v, '(', ')'); break;
         case LVAL_QEXPR:     lval_expr_print(v, '{', '}'); break;
@@ -39,3 +39,4 @@ void lval_print(lval* v) {
 
 
 void lval_println(lval* v) { lval_print(v); putchar('\n'); }
+

@@ -23,9 +23,11 @@
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lenv* e, lval* a) {
+//    puts("in car before erro check");
     LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'car' passed incorrect type.");
     CALLED_W_NIL(a, "Function car passed NIL as argument");
     INC_ARG_NO(a, 1, "Function 'car' passed too many arguments.");
+//    puts("in car after erro check");
 
     // create a new lval frm the first element of a
     lval* v = lval_take(a, 0);
@@ -161,7 +163,7 @@ lval* builtin_eval(lenv* e, lval* a) {
 }
 
 lval* builtin_def(lenv* e, lval* a) {
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Functiondef passed incorrect type.");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function def passed incorrect type.");
 
     lval* syms = a->cell[0];
 
@@ -216,7 +218,7 @@ lval* builtin_div(lenv* e, lval* a) {
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
-    lval* v = lval_fun(func);
+    lval* v = lval_fun(func, name);
     lenv_put(e, k, v);
     lval_del(k); lval_del(v);
 }

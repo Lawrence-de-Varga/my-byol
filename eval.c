@@ -17,22 +17,37 @@ lval* lval_eval(lenv* e, lval* v);
 
 lval* lval_pop(lval* v, int i) {
     /* find the item at index i */
+//    puts("in lvla_pop");
+//    printf("presenting v in lval_pop %s\n", lval_present(v));
     lval* x = v->cell[i];
+//    puts("presenting x in lval_pop");
+    printf("%s\n", lval_present(x));
 
     /* shift memory after the item at i over the top */
-    memmove(&v->cell[i], &v->cell[i+1],
-            sizeof(lval*) * (v->lval_p_count-1));
+    if (i < (v->lval_p_count - 1)) {
+//        printf("i: %d\n", i);
+//        puts("i < count");
+        memmove(&v->cell[i], &v->cell[i+1],
+                sizeof(lval*) * (v->lval_p_count-1));
+    }
+//    puts("after memmmove");
 
     // Decrease the cou t of items in the list
+//    printf("v->count: %d\n", v->lval_p_count);
+//    puts("before count decrement");
     v->lval_p_count--;
+//    printf("v->count: %d\n", v->lval_p_count);
 
     // Reallocate the memeory used
-    v->cell = realloc(v->cell, sizeof(lval*) * v->lval_p_count);
+//    puts("before final realloc");
+    v->cell = realloc(v->cell, sizeof(lval*) * v->lval_p_count) ;
+//    puts("after final realloc");
     return x;
 }
 
 
 lval* lval_take(lval* v, int i) {
+//    puts("in lval_take");
     /* Takes the item at index i and deletes the list it was in. */
     lval* x = lval_pop(v, i);
     lval_del(v);
@@ -40,11 +55,9 @@ lval* lval_take(lval* v, int i) {
 }
 
 
-
-lval* builtin(lenv* e, lval* a, char* func);
-
 lval* lval_eval_sexpr(lenv* e, lval* v) {
-
+    
+//    puts("in eval_expr");
     /* Evaluate children */
     for (int i = 0; i < v->lval_p_count; i++) {
         v->cell[i] = lval_eval(e, v->cell[i]);
@@ -52,7 +65,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
 
     // CHeck for any errors in evaluated lval
     for (int i = 0; i < v->lval_p_count; i++) {
-        if (v->cell[i]->type == LVAL_ERR) { return lval_take(v, i); }
+        if (v->cell[i]->type == LVAL_ERR) { puts("found error"); return lval_take(v, i); }
     }
 
     // evaluate null list ()
@@ -64,8 +77,9 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     // Check that first element is a function
     lval* f = lval_pop(v, 0);
     if (f->type != LVAL_FUN) {
+        lval* err = lval_err("%s is not a function.", lval_present(f));
         lval_del(v); lval_del(f);
-        return lval_err("S-expression does not start with symbol.");
+        return err;
     }
 
     // call builtin_op with operator
@@ -76,8 +90,13 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
 
 
 lval* lval_eval(lenv* e, lval* v) {
+
+//    puts("in eval");
+//    printf("%s\n", lval_present(v));
     if (v->type == LVAL_SYM) {
+//        puts("in v->type = sym");
         lval* x = lenv_get(e, v);
+
         lval_del(v);
         return x;
     }
@@ -89,12 +108,15 @@ lval* lval_eval(lenv* e, lval* v) {
 
 
 lval* builtin_op(lenv* e, lval* a, char* op) {
-
+//    puts("in builtin_op");
     // Ensure that al arguments are numbers
     for (int i = 0; i < a->lval_p_count; i++) {
         if ((a->cell[i]->type != LVAL_NUM) && (a->cell[i]->type != LVAL_DOUBLE)) {
+//            puts("in error check.");
+            char* val = lval_present(a->cell[i]);
+//            printf("val from builtin_op: %s\n", val);
             lval_del(a);
-            return lval_err("Cannot operate on non-numbers.");
+            return lval_err("%s is not a number.", val);
         }
     }
 
