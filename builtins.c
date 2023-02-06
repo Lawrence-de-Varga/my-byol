@@ -4,14 +4,19 @@
 #include "mpc.h"
 #include "eval.c"
 
-#define LASSERT(args, cond, err) \
-    if (!(cond)) { lval_del(args); return lval_err(err); }
+#define LASSERT(args, cond, fmt, ...) \
+    if (!(cond)) { \
+        lval* err = lval_err(fmt, ##__VA_ARGS__); \
+        lval_del(args); \
+        return err; \
+    }
 
 
-#define INC_ARG_NO(lvalue, expected_arg_no,  error) \
+#define INC_ARG_NO(lvalue, func_name, expected_arg_no, ...) \
     if (lvalue->lval_p_count != expected_arg_no) {  \
+            int count = lvalue->lval_p_count; \
             lval_del(lvalue); \
-            return lval_err(error); \
+            return lval_err("Function %s passed incorrect number of arguments. Expected %d, however recieved: %d.", func_name, expected_arg_no, count); \
     }
 
 #define CALLED_W_NIL(lvalue, error) \
@@ -20,13 +25,36 @@
         return lval_err(error); \
     }
 
+#define BAD_TYPE(lvalue, given_type, expected_type, ...) \
+    if (!(given_type == expected_type)) { \
+        lval_del(lvalue); \
+        return lval_err("Function '%s' passed incorrect type. Expected: '%s', however recieved: '%s'.", ##__VA_ARGS__); \
+    }
+    
+
+
+//Used to present type names in readable format
+char* lval_type_name(int type) {
+    switch(type) {
+        case LVAL_DOUBLE: return "Double";                   //  0
+        case LVAL_NUM: return "Integer";                     //  1 
+        case LVAL_ERR: return "Error";                       //  2
+        case LVAL_SYM: return "Symbol";                      //  3
+        case LVAL_SEXPR: return "S-Expression";              //  4
+        case LVAL_QEXPR: return "Q-Expression";              //  5  
+        case  LVAL_FUN: return "Function";                   //  6
+        default: return "Unknown Type";
+    }
+}
+
+/******************************* LIST FUNCTIONS *******************************/
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lenv* e, lval* a) {
 //    puts("in car before erro check");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'car' passed incorrect type.");
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "car",  lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
     CALLED_W_NIL(a, "Function car passed NIL as argument");
-    INC_ARG_NO(a, 1, "Function 'car' passed too many arguments.");
+    INC_ARG_NO(a, "car", 1);
 //    puts("in car after erro check");
 
     // create a new lval frm the first element of a
@@ -37,8 +65,8 @@ lval* builtin_car(lenv* e, lval* a) {
 }
 
 lval* builtin_cdr(lenv* e, lval* a) {
-    INC_ARG_NO(a, 1, "Function 'cdr' passed too many arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'cdr' passed incorrect type.");
+    INC_ARG_NO(a, "cdr", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "cdr", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
     CALLED_W_NIL(a, "Function 'cdr' passed {}.");
 
 
@@ -48,8 +76,8 @@ lval* builtin_cdr(lenv* e, lval* a) {
 }
 
 lval* builtin_cons(lenv* e, lval* a) {
-    INC_ARG_NO(a, 2, "Function 'cons' passed incorrect number of arguments.");
-    LASSERT(a, a->cell[1]->type == LVAL_QEXPR, "Function 'cons' needs a q-expr as its second argument.");
+    INC_ARG_NO(a, "cons", 2);
+    BAD_TYPE(a, a->cell[1]->type, LVAL_QEXPR, "cons", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[1]->type));
 
     // increase count and increase allocated memory
     a->cell[1]->lval_p_count++;
@@ -65,8 +93,8 @@ lval* builtin_cons(lenv* e, lval* a) {
 }
 
 lval* builtin_reverse(lenv* e, lval* a) {
-    INC_ARG_NO(a, 1, "Function 'reverse' called with incorrect number of arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'reverse' needs a q-expr as its argument.");
+    INC_ARG_NO(a, "reverse", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "reverse", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
 
     lval* v = lval_qexpr();
     lval* to_rev = a->cell[0];
@@ -84,8 +112,8 @@ lval* builtin_reverse(lenv* e, lval* a) {
 }
 
 lval* builtin_init(lenv* e, lval* a) {
-    INC_ARG_NO(a, 1, "Function 'init' called with incorrect number of arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'init' needs a q-expr as its argument.");
+    INC_ARG_NO(a,"init", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "init", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
 
     lval* v = lval_qexpr();
     // set to_map for convenience
@@ -139,8 +167,8 @@ lval* builtin_join(lenv* e, lval* a) {
 
 
 lval* builtin_len(lenv* e, lval* a) {
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'len' passed incorrect type.");
-    INC_ARG_NO(a, 1, "Function 'len' passed too many arguments.");
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "len", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
+    INC_ARG_NO(a, "length", 1);
 
     switch(a->type) {
         case LVAL_QEXPR:
@@ -154,8 +182,8 @@ lval* builtin_len(lenv* e, lval* a) {
 /********************* SPECIAL FUNCTIONS ************************************/
 
 lval* builtin_eval(lenv* e, lval* a) {
-    INC_ARG_NO(a, 1, "Function 'eval' passed too many arguments.");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type.");
+    INC_ARG_NO(a, "eval", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "eval", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
 
     lval* x = lval_take(a, 0);
     x->type = LVAL_SEXPR;
@@ -163,7 +191,7 @@ lval* builtin_eval(lenv* e, lval* a) {
 }
 
 lval* builtin_def(lenv* e, lval* a) {
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function def passed incorrect type.");
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "def", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
 
     lval* syms = a->cell[0];
 
@@ -181,7 +209,7 @@ lval* builtin_def(lenv* e, lval* a) {
     return lval_sexpr();
 }
 
-/*********************** AMTH FUNCTIONS **************************************/
+/*********************** MATH FUNCTIONS **************************************/
 
 lval* builtin_add(lenv* e, lval* a) {
     return builtin_op(e, a, "+");
@@ -198,21 +226,6 @@ lval* builtin_mul(lenv* e, lval* a) {
 lval* builtin_div(lenv* e, lval* a) {
     return builtin_op(e, a, "/");
 }
-
-//lval* builtin(lenv* e, lval* a, char* func) {
-//    if (strcmp("list", func) == 0) { return builtin_list(e, a); }
-//    if (strcmp("len", func) == 0) { return builtin_len(e, a); }
-//    if (strcmp("car", func) == 0) { return builtin_car(e, a); }
-//    if (strcmp("cons", func) == 0) { return builtin_cons(e, a); }
-//    if (strcmp("cdr", func) == 0) { return builtin_cdr(e, a); }
-//    if (strcmp("join", func) == 0) { return builtin_join(e, a); }
-//    if (strcmp("reverse", func) == 0) { return builtin_reverse(e, a); }
-//    if (strcmp("init", func) == 0) { return builtin_init(e, a); }
-//    if (strcmp("eval", func) == 0) { return builtin_eval(e, a); }
-//    if (strstr("+-*/^", func)) { return builtin_op(e, a, func); }
-//    lval_del(a);
-//    return lval_err("Unknown function.");
-//}
 
 /************************ REGISTERING BUILTINS FOR ENVIRONMENT ***************/
 
@@ -232,6 +245,7 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "reverse", builtin_reverse);
     lenv_add_builtin(e, "init", builtin_init);
     lenv_add_builtin(e, "join", builtin_join);
+    lenv_add_builtin(e, "length", builtin_len);
 
     // Variable Functions
     lenv_add_builtin(e, "def", builtin_def);

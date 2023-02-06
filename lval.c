@@ -68,7 +68,7 @@ lval* lval_err(char* fmt, ...) {
     va_list va;
     va_start(va, fmt);
 
-    v->err = malloc(512);
+    v->err = malloc(1024);
 
     vsnprintf(v->err, 511, fmt, va);
 
@@ -184,13 +184,14 @@ char* lval_expr_present(lval* v, char open, char close) {
     strcat(expr, &close);
 //    char* string  = expr;
 //    printf("%s\n", expr);
+    expr = realloc(expr, sizeof(expr));
     return expr;
 }
 
 // used to return a string representation of any lval for erro messaging purposes.
 char* lval_present (lval* v) {
 //    puts("In lval_present");
-    char* string_presentation = calloc(1024, sizeof(char));
+    char* string_presentation = calloc(2048, sizeof(char));
 //    puts ("after string_presentation assign");
     char* expr;
     switch (v->type) {
@@ -214,6 +215,7 @@ char* lval_present (lval* v) {
     }
     
 //    char* string = realloc(string_presentation, strlen(string_presentation) +1);
+    string_presentation = realloc(string_presentation, sizeof(string_presentation));
     return string_presentation;
 }
 

@@ -21,7 +21,7 @@ lval* lval_pop(lval* v, int i) {
 //    printf("presenting v in lval_pop %s\n", lval_present(v));
     lval* x = v->cell[i];
 //    puts("presenting x in lval_pop");
-    printf("%s\n", lval_present(x));
+//    printf("%s\n", lval_present(x));
 
     /* shift memory after the item at i over the top */
     if (i < (v->lval_p_count - 1)) {
