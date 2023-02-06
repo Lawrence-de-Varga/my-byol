@@ -42,7 +42,7 @@ lval* lval_read(lenv* e, mpc_ast_t* t) {
 //    printast(t);
     if (strstr(t->tag, "integer")) { return lval_read_int(t); }
     if (strstr(t->tag, "double")) { return lval_read_double(t); }
-    if ((strstr(t->tag, "symbol")) && (str_in_env_p(e, t->contents))) { return lenv_get(e, lval_sym(t->contents)); }
+    if ((strstr(t->tag, "symbol")) && (sym_in_env_p(e, t->contents))) { return lenv_get(e, lval_sym(t->contents)); }
     if (strstr(t->tag, "symbol")) { return lval_sym(t->contents); }
 
 //    puts("Printing current ast inside lval_read.");

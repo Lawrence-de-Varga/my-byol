@@ -292,7 +292,8 @@ lval* lenv_get(lenv* e, lval* k) {
     return lval_err("symbol %s, is not bound in this environment.", k->sym);
 }
 
-bool str_in_env_p(lenv* e, char* str) {
+// Checks if a symbol in in the given env
+bool sym_in_env_p(lenv* e, char* str) {
     for (int i = 0; i < e->count; i++) {
         if (strcmp(str, e->syms[i]) == 0) {
             return true;

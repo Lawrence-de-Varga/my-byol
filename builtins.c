@@ -231,6 +231,13 @@ lval* builtin_div(lenv* e, lval* a) {
     return builtin_op(e, a, "/");
 }
 
+/************************ MISC ************************************************/
+
+lval* builtin_exit(lenv* e, lval* a) {
+    puts("I'm too young to die!");
+    exit(0);
+}
+
 /************************ REGISTERING BUILTINS FOR ENVIRONMENT ***************/
 
 // reudimentary function to print all the currently bound symbols
@@ -271,6 +278,7 @@ void lenv_add_builtins(lenv* e) {
     // Other
     lenv_add_builtin(e, "eval", builtin_eval);
     lenv_add_builtin(e, "env", builtin_print_lenv);
+    lenv_add_builtin(e, "exit", builtin_exit);
 
 
     // Math functions
