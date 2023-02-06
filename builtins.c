@@ -233,6 +233,20 @@ lval* builtin_div(lenv* e, lval* a) {
 
 /************************ REGISTERING BUILTINS FOR ENVIRONMENT ***************/
 
+// reudimentary function to print all the currently bound symbols
+lval* builtin_print_lenv(lenv* e, lval* a) {
+    INC_ARG_NO(a, "env", 1);
+
+    puts("Printing all symbols bound in current env:");
+    for (int i = 0; i < e->count; i++) {
+        printf("%s\n", e->syms[i]);
+    }
+
+    return a;
+}
+
+
+// Adds a builtin function to the lenv
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
     lval* v = lval_fun(func, name);
@@ -256,6 +270,8 @@ void lenv_add_builtins(lenv* e) {
 
     // Other
     lenv_add_builtin(e, "eval", builtin_eval);
+    lenv_add_builtin(e, "env", builtin_print_lenv);
+
 
     // Math functions
     lenv_add_builtin(e, "+", builtin_add);
@@ -263,5 +279,18 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "*", builtin_mul);
     lenv_add_builtin(e, "/", builtin_div);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
