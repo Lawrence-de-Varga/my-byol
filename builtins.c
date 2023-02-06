@@ -15,15 +15,17 @@
 #define INC_ARG_NO(lvalue, func_name, expected_arg_no) \
     if (lvalue->lval_p_count != expected_arg_no) {  \
             int count = lvalue->lval_p_count; \
-            lval* err = lval_err("Function %s passed incorrect number of arguments. Expected %d, however recieved: %d.", func_name, expected_arg_no, count); \
+            lval* err = lval_err("Function %s passed incorrect number of arguments. Expected %d, however recieved: %d." \
+                    , func_name, expected_arg_no, count); \
             lval_del(lvalue); \
             return err; \
     }
 
-#define CALLED_W_NIL(lvalue, error) \
+#define CALLED_W_NIL(lvalue,  func_name) \
     if (lvalue->cell[0]->lval_p_count == 0) { \
+        lval* err = lval_err("Function %s called with NIL", func_name); \
         lval_del(lvalue); \
-        return lval_err(error); \
+        return err; \
     }
 
 #define BAD_TYPE(lvalue, given_type, expected_type, func_name) \
@@ -54,7 +56,7 @@ char* lval_type_name(int type) {
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lenv* e, lval* a) {
-    CALLED_W_NIL(a, "Function car passed NIL as argument");
+    CALLED_W_NIL(a, "car");
     INC_ARG_NO(a, "car", 1);
     BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "car");
 
@@ -66,7 +68,7 @@ lval* builtin_car(lenv* e, lval* a) {
 }
 
 lval* builtin_cdr(lenv* e, lval* a) {
-    CALLED_W_NIL(a, "Function 'cdr' passed {}.");
+    CALLED_W_NIL(a, "cdr");
     INC_ARG_NO(a, "cdr", 1);
     BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "cdr");
 
@@ -114,6 +116,7 @@ lval* builtin_reverse(lenv* e, lval* a) {
 
 lval* builtin_init(lenv* e, lval* a) {
     INC_ARG_NO(a,"init", 1);
+    CALLED_W_NIL(a, "init");
     BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "init");
 
     lval* v = lval_qexpr();
