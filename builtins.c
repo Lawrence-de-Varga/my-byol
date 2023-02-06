@@ -12,11 +12,12 @@
     }
 
 
-#define INC_ARG_NO(lvalue, func_name, expected_arg_no, ...) \
+#define INC_ARG_NO(lvalue, func_name, expected_arg_no) \
     if (lvalue->lval_p_count != expected_arg_no) {  \
             int count = lvalue->lval_p_count; \
+            lval* err = lval_err("Function %s passed incorrect number of arguments. Expected %d, however recieved: %d.", func_name, expected_arg_no, count); \
             lval_del(lvalue); \
-            return lval_err("Function %s passed incorrect number of arguments. Expected %d, however recieved: %d.", func_name, expected_arg_no, count); \
+            return err; \
     }
 
 #define CALLED_W_NIL(lvalue, error) \
@@ -25,10 +26,12 @@
         return lval_err(error); \
     }
 
-#define BAD_TYPE(lvalue, given_type, expected_type, ...) \
+#define BAD_TYPE(lvalue, given_type, expected_type, func_name) \
     if (!(given_type == expected_type)) { \
+        lval* err = lval_err("Function '%s' passed incorrect type. Expected: '%s', however recieved: '%s'.", \
+                func_name, lval_type_name(expected_type), lval_type_name(given_type)); \
         lval_del(lvalue); \
-        return lval_err("Function '%s' passed incorrect type. Expected: '%s', however recieved: '%s'.", ##__VA_ARGS__); \
+        return err; \
     }
     
 
@@ -51,11 +54,9 @@ char* lval_type_name(int type) {
 
 // takes a q-expr and returns a q-expr with only the first element of the input q-expr
 lval* builtin_car(lenv* e, lval* a) {
-//    puts("in car before erro check");
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "car",  lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
     CALLED_W_NIL(a, "Function car passed NIL as argument");
     INC_ARG_NO(a, "car", 1);
-//    puts("in car after erro check");
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "car");
 
     // create a new lval frm the first element of a
     lval* v = lval_take(a, 0);
@@ -65,9 +66,9 @@ lval* builtin_car(lenv* e, lval* a) {
 }
 
 lval* builtin_cdr(lenv* e, lval* a) {
-    INC_ARG_NO(a, "cdr", 1);
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "cdr", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
     CALLED_W_NIL(a, "Function 'cdr' passed {}.");
+    INC_ARG_NO(a, "cdr", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "cdr");
 
 
     lval* v = lval_take(a, 0);
@@ -77,7 +78,7 @@ lval* builtin_cdr(lenv* e, lval* a) {
 
 lval* builtin_cons(lenv* e, lval* a) {
     INC_ARG_NO(a, "cons", 2);
-    BAD_TYPE(a, a->cell[1]->type, LVAL_QEXPR, "cons", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[1]->type));
+    BAD_TYPE(a, a->cell[1]->type, LVAL_QEXPR, "cons");
 
     // increase count and increase allocated memory
     a->cell[1]->lval_p_count++;
@@ -94,7 +95,7 @@ lval* builtin_cons(lenv* e, lval* a) {
 
 lval* builtin_reverse(lenv* e, lval* a) {
     INC_ARG_NO(a, "reverse", 1);
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "reverse", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "reverse");
 
     lval* v = lval_qexpr();
     lval* to_rev = a->cell[0];
@@ -113,7 +114,7 @@ lval* builtin_reverse(lenv* e, lval* a) {
 
 lval* builtin_init(lenv* e, lval* a) {
     INC_ARG_NO(a,"init", 1);
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "init", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "init");
 
     lval* v = lval_qexpr();
     // set to_map for convenience
@@ -167,8 +168,8 @@ lval* builtin_join(lenv* e, lval* a) {
 
 
 lval* builtin_len(lenv* e, lval* a) {
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "len", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
     INC_ARG_NO(a, "length", 1);
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "length");
 
     switch(a->type) {
         case LVAL_QEXPR:
@@ -183,7 +184,7 @@ lval* builtin_len(lenv* e, lval* a) {
 
 lval* builtin_eval(lenv* e, lval* a) {
     INC_ARG_NO(a, "eval", 1);
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "eval", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "eval");
 
     lval* x = lval_take(a, 0);
     x->type = LVAL_SEXPR;
@@ -191,7 +192,7 @@ lval* builtin_eval(lenv* e, lval* a) {
 }
 
 lval* builtin_def(lenv* e, lval* a) {
-    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "def", lval_type_name(LVAL_QEXPR), lval_type_name(a->cell[0]->type));
+    BAD_TYPE(a, a->cell[0]->type, LVAL_QEXPR, "def");
 
     lval* syms = a->cell[0];
 

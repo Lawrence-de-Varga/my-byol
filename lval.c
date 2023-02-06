@@ -70,7 +70,7 @@ lval* lval_err(char* fmt, ...) {
 
     v->err = malloc(1024);
 
-    vsnprintf(v->err, 511, fmt, va);
+    vsnprintf(v->err, 1023, fmt, va);
 
     v->err = realloc(v->err, strlen(v->err)+1);
 
